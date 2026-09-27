@@ -9,7 +9,7 @@ readonly PID_FILE="${RUN_DIR}/dev-toolbox.pid"
 readonly LOG_FILE="${RUN_DIR}/server.log"
 readonly PORT_NUMBER="1700"
 
-PYTHON_BIN="${PYTHON_BIN:-python3}"
+PYTHON_BIN="${PYTHON_BIN:-python3.13}"
 HOST_ADDRESS="${HOST:-127.0.0.1}"
 ACTION="${1:-start}"
 
@@ -74,7 +74,7 @@ PY
         "${APP_DIR}/data/notes/articles" \
         "${APP_DIR}/data/notes/uploads"
 
-    if [[ ! -x "${VENV_DIR}/bin/python" ]]; then
+    if [[ ! -x "${VENV_DIR}/bin/python3.13" ]]; then
         echo "[1/3] Создаю виртуальное окружение…"
         "${PYTHON_BIN}" -m venv "${VENV_DIR}"
     else
@@ -82,7 +82,7 @@ PY
     fi
 
     echo "[2/3] Проверяю и устанавливаю зависимости…"
-    "${VENV_DIR}/bin/python" -m pip install \
+    "${VENV_DIR}/bin/python3.13" -m pip install \
         --disable-pip-version-check \
         --quiet \
         -r "${APP_DIR}/requirements.txt"
@@ -104,7 +104,7 @@ start_server() {
         HOST="${HOST_ADDRESS}" \
         PORT="${PORT_NUMBER}" \
         DEBUG="false" \
-        "${VENV_DIR}/bin/python" "${APP_DIR}/server.py" \
+        "${VENV_DIR}/bin/python3.13" "${APP_DIR}/server.py" \
         >> "${LOG_FILE}" 2>&1 < /dev/null &
 
     local pid=$!
