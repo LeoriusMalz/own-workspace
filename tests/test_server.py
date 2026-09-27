@@ -6,6 +6,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import server
+from workspace import create_app, notes
+from workspace.yt import common as yt_common, creator
 
 
 class YtChild(str):
@@ -253,14 +255,38 @@ class DevToolboxServerTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary_directory = tempfile.TemporaryDirectory()
         root = Path(self.temporary_directory.name)
-        server.DRAFTS_DIR = root / "drafts"
-        server.ARTICLES_DIR = root / "articles"
-        server.UPLOADS_DIR = root / "uploads"
-        server.ensure_directories()
+        directories = patch.multiple(
+            notes,
+            DRAFTS_DIR=root / "drafts",
+            ARTICLES_DIR=root / "articles",
+            UPLOADS_DIR=root / "uploads",
+        )
+        directories.start()
+        self.addCleanup(directories.stop)
+        notes.ensure_directories()
         self.client = server.app.test_client()
 
     def tearDown(self) -> None:
         self.temporary_directory.cleanup()
+
+    def test_app_factory_registers_routes_and_global_handlers(self) -> None:
+        for _ in range(2):
+            app = create_app()
+            app.config["MAX_CONTENT_LENGTH"] = 16
+            client = app.test_client()
+            response = client.get("/api/health")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.get_json(), {
+                "ok": True, "ytClusters": ["jupiter", "miranda", "saturn"],
+            })
+            response = client.post("/api/notes/uploads", data={"payload": "x" * 32})
+            self.assertEqual(response.status_code, 413)
+            self.assertEqual(response.get_json(), {"error": "Файл или запрос слишком большой"})
+            for response in (response, client.get("/missing")):
+                self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
+                self.assertEqual(response.headers["X-Frame-Options"], "DENY")
+                self.assertEqual(response.headers["Referrer-Policy"], "same-origin")
+                self.assertIn("frame-ancestors 'none'", response.headers["Content-Security-Policy"])
 
     def test_spa_routes(self) -> None:
         for path in (
@@ -291,7 +317,7 @@ class DevToolboxServerTest(unittest.TestCase):
         yt_client = ManagerYtClient({
             path: {"type": "link", "target_path": "//home/real-table", "broken": False},
         })
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/manager/inspect",
                 json={"path": path, "cluster": "jupiter"},
@@ -322,7 +348,7 @@ class DevToolboxServerTest(unittest.TestCase):
                 "annotation": "Hot config",
             },
         })
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/manager/inspect",
                 json={"path": path, "cluster": "saturn"},
@@ -342,7 +368,7 @@ class DevToolboxServerTest(unittest.TestCase):
             "//home/source": {"type": "table", "dynamic": False},
             "//home/target": {"type": "map_node"},
         })
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/manager/validate-destination",
                 json={
@@ -365,7 +391,7 @@ class DevToolboxServerTest(unittest.TestCase):
             "//home/team": {"type": "map_node"},
             "//home/team/source": {"type": "table", "dynamic": False},
         })
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/manager/validate-destination",
                 json={
@@ -386,7 +412,7 @@ class DevToolboxServerTest(unittest.TestCase):
     def test_mutator_inspect_normalizes_bool_and_yson(self) -> None:
         path = "//home/configs"
         yt_client = MutatorYtClient(path, row_count=2)
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/mutator/inspect",
                 json={"cluster": "jupiter", "path": path},
@@ -405,7 +431,7 @@ class DevToolboxServerTest(unittest.TestCase):
         path = "//home/configs"
         yt_client = MutatorYtClient(path)
         yt_client.nodes[path]["tablet_state"] = "frozen"
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/mutator/inspect",
                 json={"cluster": "jupiter", "path": path},
@@ -421,7 +447,7 @@ class DevToolboxServerTest(unittest.TestCase):
     def test_mutator_add_optional_column_to_nonempty_strict_table(self) -> None:
         path = "//home/configs"
         yt_client = MutatorYtClient(path, row_count=5, strict=True)
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/mutator/schema/plan",
                 json={
@@ -441,7 +467,7 @@ class DevToolboxServerTest(unittest.TestCase):
     def test_mutator_rejects_required_column_on_nonempty_table(self) -> None:
         path = "//home/configs"
         yt_client = MutatorYtClient(path, row_count=5)
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/mutator/schema/plan",
                 json={
@@ -458,7 +484,7 @@ class DevToolboxServerTest(unittest.TestCase):
     def test_mutator_strict_schema_blocks_column_delete_even_when_empty(self) -> None:
         path = "//home/configs"
         yt_client = MutatorYtClient(path, dynamic=False, row_count=0, strict=True)
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/mutator/schema/plan",
                 json={
@@ -474,7 +500,7 @@ class DevToolboxServerTest(unittest.TestCase):
     def test_mutator_static_strict_toggle_obeys_table_contents(self) -> None:
         path = "//home/configs"
         strict_client = MutatorYtClient(path, dynamic=False, row_count=3, strict=True)
-        with patch.object(server, "build_yt_client", return_value=strict_client):
+        with patch.object(yt_common, "build_yt_client", return_value=strict_client):
             disable = self.client.post(
                 "/api/yt/mutator/schema/plan",
                 json={
@@ -485,7 +511,7 @@ class DevToolboxServerTest(unittest.TestCase):
             )
 
         nonstrict_client = MutatorYtClient(path, dynamic=False, row_count=3, strict=False)
-        with patch.object(server, "build_yt_client", return_value=nonstrict_client):
+        with patch.object(yt_common, "build_yt_client", return_value=nonstrict_client):
             enable = self.client.post(
                 "/api/yt/mutator/schema/plan",
                 json={
@@ -503,7 +529,7 @@ class DevToolboxServerTest(unittest.TestCase):
     def test_mutator_dynamic_table_cannot_disable_strict(self) -> None:
         path = "//home/configs"
         yt_client = MutatorYtClient(path, dynamic=True, strict=True)
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/mutator/schema/plan",
                 json={
@@ -522,7 +548,7 @@ class DevToolboxServerTest(unittest.TestCase):
         yt_client.nodes[path]["schema"].append({
             "name": "score", "type": "int8", "required": True, "type_v3": "int8",
         })
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             widening = self.client.post(
                 "/api/yt/mutator/schema/plan",
                 json={
@@ -557,7 +583,7 @@ class DevToolboxServerTest(unittest.TestCase):
             "name": "note", "type": "string", "required": False,
             "type_v3": {"type_name": "optional", "item": "string"},
         })
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             enable = self.client.post(
                 "/api/yt/mutator/schema/plan",
                 json={
@@ -588,7 +614,7 @@ class DevToolboxServerTest(unittest.TestCase):
     def test_mutator_schema_apply_unmounts_and_restores_dynamic_table(self) -> None:
         path = "//home/configs"
         yt_client = MutatorYtClient(path, mounted=True)
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             inspect_response = self.client.post(
                 "/api/yt/mutator/inspect",
                 json={"cluster": "saturn", "path": path},
@@ -621,7 +647,7 @@ class DevToolboxServerTest(unittest.TestCase):
             raise RuntimeError("schema rejected")
 
         yt_client.alter_table = fail_alter
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             inspect_response = self.client.post(
                 "/api/yt/mutator/inspect",
                 json={"cluster": "saturn", "path": path},
@@ -651,7 +677,7 @@ class DevToolboxServerTest(unittest.TestCase):
     def test_mutator_validates_range_and_duplicate_keys(self) -> None:
         path = "//home/configs"
         yt_client = MutatorYtClient(path, rows=[{"itemId": 7, "actual": True, "configMeta": None}])
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             invalid = self.client.post(
                 "/api/yt/mutator/data/validate-inserts",
                 json={
@@ -685,7 +711,7 @@ class DevToolboxServerTest(unittest.TestCase):
     def test_mutator_inserts_a_valid_record_package(self) -> None:
         path = "//home/configs"
         yt_client = MutatorYtClient(path, rows=[])
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             inspected = self.client.post(
                 "/api/yt/mutator/inspect",
                 json={"cluster": "jupiter", "path": path},
@@ -714,7 +740,7 @@ class DevToolboxServerTest(unittest.TestCase):
     def test_mutator_key_search_uses_typed_placeholders_and_limit(self) -> None:
         path = "//home/configs"
         yt_client = MutatorYtClient(path, rows=[{"itemId": 7, "actual": True, "configMeta": None}])
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/mutator/data/search",
                 json={
@@ -742,7 +768,7 @@ class DevToolboxServerTest(unittest.TestCase):
             {"itemId": 1, "actual": True, "configMeta": None},
             {"itemId": 2, "actual": False, "configMeta": None},
         ])
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             inspect_response = self.client.post(
                 "/api/yt/mutator/inspect",
                 json={"cluster": "miranda", "path": path},
@@ -774,7 +800,7 @@ class DevToolboxServerTest(unittest.TestCase):
         yt_client = ManagerYtClient({
             path: {"type": "table", "dynamic": True, "tablet_state": "mounted"},
         })
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/manager/action",
                 json={"confirmed": True, "action": "mount", "path": path, "cluster": "jupiter"},
@@ -788,7 +814,7 @@ class DevToolboxServerTest(unittest.TestCase):
     def test_manager_updates_only_allowed_attributes(self) -> None:
         path = "//home/static"
         yt_client = ManagerYtClient({path: {"type": "table", "dynamic": False}})
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/manager/action",
                 json={
@@ -826,7 +852,7 @@ class DevToolboxServerTest(unittest.TestCase):
             },
         })
         clients = {"jupiter": child_client, "miranda": meta_client}
-        with patch.object(server, "build_yt_client", side_effect=lambda _token, cluster: clients[cluster]):
+        with patch.object(yt_common, "build_yt_client", side_effect=lambda _token, cluster: clients[cluster]):
             response = self.client.post(
                 "/api/yt/manager/action",
                 json={
@@ -878,7 +904,7 @@ class DevToolboxServerTest(unittest.TestCase):
             replica_path: {"type": "table", "dynamic": True, "tablet_state": "mounted"},
         })
         clients = {"miranda": meta_client, "saturn": child_client}
-        with patch.object(server, "build_yt_client", side_effect=lambda _token, cluster: clients[cluster]):
+        with patch.object(yt_common, "build_yt_client", side_effect=lambda _token, cluster: clients[cluster]):
             response = self.client.post(
                 "/api/yt/manager/action",
                 json={
@@ -925,7 +951,7 @@ class DevToolboxServerTest(unittest.TestCase):
                 YtChild("nested_folder", {"type": "map_node"}),
             ],
         )
-        with patch.object(server, "build_yt_client", return_value=client):
+        with patch.object(yt_common, "build_yt_client", return_value=client):
             response = self.client.post(
                 "/api/yt/table-info",
                 json={"path": path, "cluster": "miranda"},
@@ -946,7 +972,7 @@ class DevToolboxServerTest(unittest.TestCase):
             def exists(self, _: str) -> bool:
                 raise RuntimeError("Access denied for this user")
 
-        with patch.object(server, "build_yt_client", return_value=ForbiddenClient()):
+        with patch.object(yt_common, "build_yt_client", return_value=ForbiddenClient()):
             response = self.client.post(
                 "/api/yt/table-info",
                 json={"path": "//secret/table", "cluster": "saturn"},
@@ -977,7 +1003,7 @@ class DevToolboxServerTest(unittest.TestCase):
 
     def test_directory_validation_marks_every_missing_path(self) -> None:
         yt_client = DirectoryYtClient({"//home": "map_node"})
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/creator/directory/validate",
                 json={"cluster": "jupiter", "path": "//home/team/project"},
@@ -1001,7 +1027,7 @@ class DevToolboxServerTest(unittest.TestCase):
             "//home": "map_node",
             "//home/configs": "table",
         })
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/creator/directory/validate",
                 json={"cluster": "saturn", "path": "//home/configs/archive"},
@@ -1019,7 +1045,7 @@ class DevToolboxServerTest(unittest.TestCase):
             "//home": "map_node",
             "//home/team": "map_node",
         })
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/creator/directory/validate",
                 json={"cluster": "jupiter", "path": "//home/team"},
@@ -1034,7 +1060,7 @@ class DevToolboxServerTest(unittest.TestCase):
 
     def test_directory_create_builds_chain_in_order(self) -> None:
         yt_client = DirectoryYtClient({"//home": "map_node"})
-        with patch.object(server, "build_yt_client", return_value=yt_client):
+        with patch.object(yt_common, "build_yt_client", return_value=yt_client):
             response = self.client.post(
                 "/api/yt/creator/directory/create",
                 json={
@@ -1093,8 +1119,8 @@ class DevToolboxServerTest(unittest.TestCase):
             "leaveUnmounted": True,
         }
         with (
-            patch.object(server, "build_yt_client", side_effect=lambda _token, cluster: clients[cluster]),
-            patch.object(server, "validate_creator_destinations", return_value={"valid": True, "checks": []}),
+            patch.object(yt_common, "build_yt_client", side_effect=lambda _token, cluster: clients[cluster]),
+            patch.object(creator, "validate_creator_destinations", return_value={"valid": True, "checks": []}),
         ):
             response = self.client.post(
                 "/api/yt/creator/create",
@@ -1134,8 +1160,8 @@ class DevToolboxServerTest(unittest.TestCase):
             "preferredSyncReplicaClusters": ["jupiter"],
         }
         with (
-            patch.object(server, "build_yt_client", side_effect=lambda _token, cluster: clients[cluster]),
-            patch.object(server, "validate_creator_destinations", return_value={"valid": True, "checks": []}),
+            patch.object(yt_common, "build_yt_client", side_effect=lambda _token, cluster: clients[cluster]),
+            patch.object(creator, "validate_creator_destinations", return_value={"valid": True, "checks": []}),
         ):
             response = self.client.post(
                 "/api/yt/creator/create",
