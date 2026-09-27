@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Локальный набор инструментов: YT Observer, YT Creator, YT Manager, YT Mutator и заметки">
+    <title>Lev Maltsev</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/yt-creator.css">
+    <link rel="stylesheet" href="/yt-manager.css">
+    <link rel="stylesheet" href="/yt-mutator.css">
+</head>
+<body>
+    <header class="app-header">
+        <a class="brand" href="/tools/yt-observer" data-link aria-label="Lev Maltsev — на главную">
+            <img class="brand__avatar" id="brand-avatar" src="/assets/avatar-placeholder.svg" alt="Аватар Lev Maltsev">
+            <span class="brand__text">
+                <span class="brand__eyebrow">WORKSPACE</span>
+                <span class="brand__name">Lev Maltsev</span>
+            </span>
+        </a>
+
+        <nav class="header-nav" aria-label="Основная навигация">
+            <div class="nav-dropdown" data-dropdown="tools">
+                <button class="nav-button" type="button" data-dropdown-trigger="tools" aria-expanded="false">
+                    Инструменты <span class="chevron" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="m2.5 4.25 3.5 3.5 3.5-3.5"/></svg></span>
+                </button>
+                <div class="dropdown-menu" data-dropdown-menu="tools" hidden>
+                    <div class="dropdown-label">Инструменты</div>
+                    <a class="dropdown-item" href="/tools/yt-observer" data-link>
+                        <span class="dropdown-icon dropdown-icon--blue">O</span>
+                        <span><strong>YT Observer</strong><small>Таблицы и папки</small></span>
+                    </a>
+                    <a class="dropdown-item" href="/tools/yt-creator" data-link>
+                        <span class="dropdown-icon dropdown-icon--green">+</span>
+                        <span><strong>YT Creator</strong><small>Создание таблиц</small></span>
+                    </a>
+                    <a class="dropdown-item" href="/tools/yt-manager" data-link>
+                        <span class="dropdown-icon dropdown-icon--violet">M</span>
+                        <span><strong>YT Manager</strong><small>Операции с нодами</small></span>
+                    </a>
+                    <a class="dropdown-item" href="/tools/yt-mutator" data-link>
+                        <span class="dropdown-icon dropdown-icon--amber">μ</span>
+                        <span><strong>YT Mutator</strong><small>Схема и данные</small></span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-dropdown" data-dropdown="notes">
+                <button class="nav-button" type="button" data-dropdown-trigger="notes" aria-expanded="false">
+                    Заметки <span class="chevron" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="m2.5 4.25 3.5 3.5 3.5-3.5"/></svg></span>
+                </button>
+                <div class="dropdown-menu dropdown-menu--notes" data-dropdown-menu="notes" hidden>
+                    <button class="dropdown-action" type="button" id="create-note-button">
+                        <span class="dropdown-action__plus">+</span> Создать
+                    </button>
+                    <div class="dropdown-pinned">
+                        <div class="dropdown-label dropdown-label--row">
+                            <span>Черновики</span><span id="drafts-count">0</span>
+                        </div>
+                        <div id="drafts-menu" class="notes-menu-list"></div>
+                    </div>
+                    <div class="dropdown-label dropdown-label--row">
+                        <span>Статьи</span><span id="articles-count">0</span>
+                    </div>
+                    <div id="articles-menu" class="notes-menu-list"></div>
+                </div>
+            </div>
+
+            <button class="nav-button" id="settings-button" type="button">Настройки</button>
+        </nav>
+
+        <div class="token-stack" aria-label="Статус токенов">
+            <button class="token-badge" id="yt-token-badge" type="button" data-token-kind="yt">
+                <span class="token-dot"></span><span>YT</span><strong>не установлен</strong>
+            </button>
+            <button class="token-badge" id="git-token-badge" type="button" data-token-kind="git">
+                <span class="token-dot"></span><span>Git</span><strong>не установлен</strong>
+            </button>
+        </div>
+    </header>
+
+    <main id="app" class="app-main" tabindex="-1"></main>
+
+    <div class="modal-backdrop" id="settings-modal" hidden>
+        <section class="modal modal--settings" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+            <header class="modal__header">
+                <div>
+                    <p class="kicker">WORKSPACE</p>
+                    <h2 id="settings-title">Настройки</h2>
+                </div>
+                <button class="icon-button" type="button" data-close-modal="settings-modal" aria-label="Закрыть">×</button>
+            </header>
+            <div class="settings-list">
+                <article class="setting-row">
+                    <img class="setting-avatar" id="settings-avatar-preview" src="/assets/avatar-placeholder.svg" alt="Текущий аватар">
+                    <div class="setting-row__copy">
+                        <h3>Фотография</h3>
+                        <span class="setting-status" id="avatar-setting-status">Стандартная фотография</span>
+                    </div>
+                    <div class="setting-actions">
+                        <button class="button button--secondary" id="choose-avatar-button" type="button">Выбрать</button>
+                        <button class="button button--ghost button--small" id="remove-avatar-button" type="button" hidden>Сбросить</button>
+                    </div>
+                </article>
+                <article class="setting-row">
+                    <div class="setting-row__icon">YT</div>
+                    <div class="setting-row__copy">
+                        <h3>YT-токен</h3>
+                        <span class="setting-status" id="yt-setting-status">Токен не установлен</span>
+                    </div>
+                    <button class="button button--secondary" type="button" data-token-kind="yt">Задать токен</button>
+                </article>
+                <article class="setting-row">
+                    <div class="setting-row__icon setting-row__icon--git">Git</div>
+                    <div class="setting-row__copy">
+                        <h3>Git-токен</h3>
+                        <span class="setting-status" id="git-setting-status">Токен не установлен</span>
+                    </div>
+                    <button class="button button--secondary" type="button" data-token-kind="git">Задать токен</button>
+                </article>
+            </div>
+            <footer class="modal__footer modal__footer--actions">
+                <span class="footer-spacer"></span>
+                <button class="button" type="button" data-close-modal="settings-modal">Готово</button>
+            </footer>
+        </section>
+    </div>
+
+    <div class="modal-backdrop" id="token-modal" hidden>
+        <section class="modal modal--compact" role="dialog" aria-modal="true" aria-labelledby="token-modal-title">
+            <header class="modal__header">
+                <div>
+                    <p class="kicker">БЕЗОПАСНОЕ ХРАНЕНИЕ</p>
+                    <h2 id="token-modal-title">Задать токен</h2>
+                </div>
+                <button class="icon-button" type="button" data-close-modal="token-modal" aria-label="Закрыть">×</button>
+            </header>
+            <label class="field-label" for="token-input">Токен</label>
+            <div class="password-field">
+                <input id="token-input" type="password" autocomplete="off" placeholder="Вставьте токен">
+                <span aria-hidden="true">•••</span>
+            </div>
+            <footer class="modal__footer modal__footer--actions">
+                <button class="button button--ghost" id="remove-token-button" type="button">Удалить текущий</button>
+                <span class="footer-spacer"></span>
+                <button class="button button--secondary" type="button" data-close-modal="token-modal">Отменить</button>
+                <button class="button" id="accept-token-button" type="button" disabled>Принять</button>
+            </footer>
+        </section>
+    </div>
+
+    <div class="modal-backdrop" id="publish-modal" hidden>
+        <section class="modal modal--compact" role="dialog" aria-modal="true" aria-labelledby="publish-title">
+            <header class="modal__header">
+                <div><p class="kicker">ПУБЛИКАЦИЯ</p><h2 id="publish-title">Название статьи</h2></div>
+                <button class="icon-button" type="button" data-close-modal="publish-modal" aria-label="Закрыть">×</button>
+            </header>
+            <label class="field-label" for="publish-title-input">Название</label>
+            <input class="text-input" id="publish-title-input" maxlength="200" placeholder="Например, Как устроен Promo Planner">
+            <p class="field-help">Из названия будет создана английская ссылка статьи.</p>
+            <footer class="modal__footer modal__footer--actions">
+                <span class="footer-spacer"></span>
+                <button class="button button--secondary" type="button" data-close-modal="publish-modal">Отменить</button>
+                <button class="button" id="confirm-publish-button" type="button" disabled>Опубликовать</button>
+            </footer>
+        </section>
+    </div>
+
+    <div class="modal-backdrop" id="confirm-modal" hidden>
+        <section class="modal modal--compact modal--danger" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+            <div class="danger-icon">!</div>
+            <h2 id="confirm-title">Удалить заметку?</h2>
+            <p id="confirm-description">Это действие нельзя отменить.</p>
+            <footer class="modal__footer modal__footer--actions">
+                <span class="footer-spacer"></span>
+                <button class="button button--secondary" type="button" data-close-modal="confirm-modal">Отменить</button>
+                <button class="button button--danger" id="confirm-action-button" type="button">Удалить</button>
+            </footer>
+        </section>
+    </div>
+
+    <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+    <input id="editor-image-input" type="file" accept="image/*" hidden>
+    <input id="avatar-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+    <script src="/yt-creator.js" defer></script>
+    <script src="/yt-manager.js" defer></script>
+    <script src="/yt-mutator.js" defer></script>
+    <script src="/app.js" defer></script>
+</body>
+</html>
