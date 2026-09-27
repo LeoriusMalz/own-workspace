@@ -3,6 +3,7 @@
 const TOKEN_KEYS = {
     yt: "dev-toolbox:yt-token",
     git: "dev-toolbox:git-token",
+    jira: "dev-toolbox:jira-token",
 };
 const CLUSTER_KEY = "dev-toolbox:yt-cluster";
 const AVATAR_KEY = "dev-toolbox:avatar";
@@ -166,12 +167,12 @@ function tokenIsSet(kind) {
 }
 
 function updateTokenStatus() {
-    for (const kind of ["yt", "git"]) {
+    for (const kind of ["yt", "git", "jira"]) {
         const isSet = tokenIsSet(kind);
         const badge = document.getElementById(`${kind}-token-badge`);
         const status = document.getElementById(`${kind}-setting-status`);
-        badge.classList.toggle("is-set", isSet);
-        badge.querySelector("strong").textContent = isSet ? "установлен" : "не установлен";
+        badge?.classList.toggle("is-set", isSet);
+        if (badge) badge.querySelector("strong").textContent = isSet ? "установлен" : "не установлен";
         status.textContent = isSet ? "Токен уже установлен" : "Токен не установлен";
         status.classList.toggle("is-set", isSet);
     }
@@ -221,7 +222,7 @@ function removeAvatar() {
 
 function showTokenModal(kind) {
     state.currentTokenKind = kind;
-    const label = kind === "yt" ? "YT" : "Git";
+    const label = { yt: "YT", git: "Git", jira: "Jira" }[kind];
     document.getElementById("token-modal-title").textContent = `Задать ${label}-токен`;
     const input = document.getElementById("token-input");
     input.value = "";
@@ -235,21 +236,23 @@ function saveToken() {
     const value = input.value.trim();
     if (!value || !state.currentTokenKind) return;
     localStorage.setItem(TOKEN_KEYS[state.currentTokenKind], value);
-    const label = state.currentTokenKind === "yt" ? "YT" : "Git";
+    const label = { yt: "YT", git: "Git", jira: "Jira" }[state.currentTokenKind];
     input.value = "";
     closeModal("token-modal");
     updateTokenStatus();
     showToast(`${label}-токен установлен`);
+    window.dispatchEvent(new CustomEvent("workspace-token-changed", { detail: state.currentTokenKind }));
 }
 
 function removeToken() {
     if (!state.currentTokenKind) return;
-    const label = state.currentTokenKind === "yt" ? "YT" : "Git";
+    const label = { yt: "YT", git: "Git", jira: "Jira" }[state.currentTokenKind];
     localStorage.removeItem(TOKEN_KEYS[state.currentTokenKind]);
     document.getElementById("token-input").value = "";
     closeModal("token-modal");
     updateTokenStatus();
     showToast(`${label}-токен удалён`);
+    window.dispatchEvent(new CustomEvent("workspace-token-changed", { detail: state.currentTokenKind }));
 }
 
 function sanitizeHtml(html) {
@@ -997,6 +1000,7 @@ function confirmDeleteNote(kind, slug, title) {
 }
 
 async function renderRoute() {
+    window.JiraCreator?.destroy?.();
     window.YtManager?.destroy?.();
     window.YtMutator?.destroy?.();
     if (state.searchController) {
@@ -1035,6 +1039,8 @@ async function renderRoute() {
             showTokenModal,
             tokenKey: TOKEN_KEYS.yt,
         });
+    } else if (path === "/tools/jira-creator") {
+        window.JiraCreator.render(app, { apiFetch, escapeHtml, showToast, showTokenModal, tokenKey: TOKEN_KEYS.jira });
     } else if (path === "/notes" || path === "/notes/") {
         app.innerHTML = notesHomeTemplate();
         document.getElementById("empty-create-note").addEventListener("click", createDraft);

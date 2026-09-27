@@ -79,6 +79,16 @@ def yt_mutator_javascript():
     return send_from_directory(STATIC_DIR, "yt-mutator.js")
 
 
+@bp.get("/jira-creator.js")
+def jira_creator_javascript():
+    return send_from_directory(STATIC_DIR, "jira-creator.js")
+
+
+@bp.get("/jira-creator.css")
+def jira_creator_styles():
+    return send_from_directory(STATIC_DIR, "jira-creator.css")
+
+
 @bp.get("/")
 @bp.get("/tools")
 @bp.get("/notes")

@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/yt-creator.css">
     <link rel="stylesheet" href="/yt-manager.css">
     <link rel="stylesheet" href="/yt-mutator.css">
+    <link rel="stylesheet" href="/jira-creator.css">
 </head>
 <body>
     <header class="app-header">
@@ -42,6 +43,10 @@
                     <a class="dropdown-item" href="/tools/yt-mutator" data-link>
                         <span class="dropdown-icon dropdown-icon--amber">μ</span>
                         <span><strong>YT Mutator</strong><small>Схема и данные</small></span>
+                    </a>
+                    <a class="dropdown-item" href="/tools/jira-creator" data-link>
+                        <span class="dropdown-icon dropdown-icon--blue">J</span>
+                        <span><strong>Jira Creator</strong><small>Конструктор задач</small></span>
                     </a>
                 </div>
             </div>
@@ -92,6 +97,14 @@
                 <button class="icon-button" type="button" data-close-modal="settings-modal" aria-label="Закрыть">×</button>
             </header>
             <div class="settings-list">
+                <article class="setting-row">
+                    <div class="setting-row__icon">Jira</div>
+                    <div class="setting-row__copy">
+                        <h3>Jira-токен</h3>
+                        <span class="setting-status" id="jira-setting-status">Токен не установлен</span>
+                    </div>
+                    <button class="button button--secondary" type="button" data-token-kind="jira">Задать токен</button>
+                </article>
                 <article class="setting-row">
                     <img class="setting-avatar" id="settings-avatar-preview" src="/assets/avatar-placeholder.svg" alt="Текущий аватар">
                     <div class="setting-row__copy">
@@ -184,6 +197,7 @@
     <input id="editor-image-input" type="file" accept="image/*" hidden>
     <input id="avatar-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
     <script src="/yt-creator.js" defer></script>
+    <script src="/jira-creator.js" defer></script>
     <script src="/yt-manager.js" defer></script>
     <script src="/yt-mutator.js" defer></script>
     <script src="/app.js" defer></script>
