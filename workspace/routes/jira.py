@@ -59,7 +59,7 @@ def preview():
 @bp.get("/metadata")
 @endpoint
 def metadata():
-    result = service.metadata(client(), request.args.get("project", "UCP"), request.args.get("issueType", ""))
+    result = service.metadata(client(), request.args.get("project", "UCP"), request.args.get("issueType", "3"))
     # Only the fields needed by the form; never return credentials.
     return {key: value for key, value in result.items() if key != "fields"}
 
