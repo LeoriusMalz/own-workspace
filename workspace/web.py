@@ -91,6 +91,7 @@ def jira_creator_styles():
 
 @bp.get("/pomodoro.js")
 @bp.get("/pomodoro-engine.js")
+@bp.get("/efficiency-window.js")
 @bp.get("/pomodoro.css")
 @bp.get("/time-tracker.js")
 @bp.get("/time-tracker.css")

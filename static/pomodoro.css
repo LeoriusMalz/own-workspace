@@ -60,12 +60,28 @@
 .ef-launch .button { font-size: 11px; padding: 10px; min-height: 42px; }
 .ef-view-actions { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
 .ef-view-actions .button { font-size: 10px; padding: 0 8px; }
+.ef-window-settings { margin-top: 20px; padding: 18px; border: 1px solid var(--border-strong); border-radius: 12px; text-align: left; background: rgba(131,214,180,.025); }
+.ef-window-settings > label { display: block; color: var(--text); font-size: 12px; font-weight: 600; margin-bottom: 10px; }
+.ef-window-settings select { width: 100%; background: #0d1219; border: 1px solid var(--border-strong); color: var(--text); border-radius: 8px; height: 38px; padding: 0 9px; font-size: 11px; }
+.ef-window-settings a { color: #83d6b4; text-decoration: underline; }
+.ef-window-settings > .button { width: 100%; font-size: 11px; }
+.ef-window-status { color: #83d6b4; font-size: 10px; margin: 9px 0 0; }
+.ef-window-status:empty { display: none; }
 .ef-warning { color: var(--amber); font-size: 11px; line-height: 1.6; padding: 10px; background: rgba(242, 186, 98, .06); border-radius: 8px; }
 .ef-dock { position: fixed; right: 22px; bottom: 22px; z-index: 55; width: min(345px, calc(100vw - 30px)); padding: 14px; background: rgba(17, 22, 31, .97); border: 1px solid var(--border-strong); border-radius: 16px; box-shadow: 0 12px 45px rgba(0,0,0,.45); backdrop-filter: blur(20px); }
 .ef-mini-panel { padding: 18px; width: 100%; }
+.ef-mini-heading { display: flex; gap: 7px; align-items: center; color: var(--text-faint); font-size: 9px; letter-spacing: .16em; margin-bottom: 17px; }
+.ef-mini-empty { padding: 14px 0; }
+.ef-mini-empty strong { display: block; font-size: 20px; margin-bottom: 8px; }
+.ef-mini-empty > span { font-size: 11px; color: var(--text-soft); line-height: 1.6; }
 .ef-mini-pomo { display: flex; align-items: center; gap: 14px; }
 .ef-mini-open { display: flex; gap: 13px; align-items: center; flex: 1; }
-.ef-mini-icon { color: #83d6b4; font-size: 30px; }
+.ef-mini-icon { color: #83d6b4; position: relative; width: 48px; height: 48px; display: grid; place-items: center; flex-shrink: 0; }
+.ef-mini-icon svg { position: absolute; inset: 0; width: 48px; height: 48px; transform: rotate(-90deg); }
+.ef-mini-icon circle { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-dasharray: 131.947; stroke-linecap: round; }
+.ef-mini-icon circle.ef-mini-ring-track { opacity: .12; }
+.ef-mini-icon > span { font-size: 23px; }
+.ef-mini-panel[data-phase="rest"] .ef-mini-icon, .ef-dock[data-phase="rest"] .ef-mini-icon { color: #9cb8ff; }
 .ef-mini-open small { color: var(--text-soft); font-size: 10px; display: block; margin-bottom: 4px; }
 .ef-mini-open strong { font-size: 27px; font-weight: 550; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
 .ef-mini-pause { display: grid; place-items: center; width: 37px; height: 37px; background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: 50%; color: var(--text); font-size: 14px; cursor: pointer; }
@@ -89,7 +105,9 @@
 .ef-full-tracker .tt-mini { background: rgba(10,15,22,.7); backdrop-filter: blur(12px); border-radius: 12px; padding: 16px; }
 .ef-compact-body .app-header, .ef-compact-body .token-stack { display: none; }
 .ef-compact-body .app-main { width: 100%; margin: 0; padding: 0; }
-.ef-pip-body { min-width: 280px; background: #11161f; }
+.ef-pip-body { min-width: 0; margin: 0; background: #11161f; }
+.ef-pip-body .ef-mini-panel { min-height: 100dvh; background: radial-gradient(ellipse at 20% 0, rgba(131,214,180,.055), transparent 70%); }
+.ef-pip-body .tt-mini-buttons button { font-size: 11px; min-height: 32px; }
 @media(max-width: 1050px) { .ef-pomo-layout { grid-template-columns: 1fr 1fr; gap: 16px; } .ef-settings,.ef-preview { padding: 19px; } .ef-launch { grid-template-columns: 1fr; } .app-header { column-gap: 10px; padding-left: 16px; padding-right: 16px; } .header-nav { gap: 1px; } }
 @media(max-width: 800px) { .ef-pomo-layout { grid-template-columns: 1fr; } .ef-preview { position: static; grid-row: 1; } .ef-clock { width: 240px; } .ef-launch { grid-template-columns: 1fr 1fr; } .ef-independent { display: none; } .ef-dock { right: 12px; bottom: 12px; } .ef-full-top { padding: 15px; } }
 @media(max-width: 450px) { .ef-grid-two { gap: 10px; } .ef-settings,.ef-preview { padding: 16px; } .ef-controls { gap: 5px; } .ef-controls .button { padding: 0 9px; } .ef-launch { grid-template-columns: 1fr; } .ef-full-clock { min-height: calc(100dvh - 250px); } }

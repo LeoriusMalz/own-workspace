@@ -9,7 +9,7 @@ window.Efficiency = (() => {
     let audioLockRelease = null, audioLockPending = false, settingsTimer, settingsDirty = false;
     let completing = false;
     let saving = Promise.resolve(), polling = false, view = null, viewCleanup = () => {}, audioNotice = "";
-    let full = null, fullTrackerCleanup = () => {}, pipWindow = null;
+    let full = null, fullTrackerCleanup = () => {}, floatingWindow = null;
     const minis = new Set();
     const channel = typeof BroadcastChannel === "function" ? new BroadcastChannel("workspace-efficiency") : null;
     const copy = value => JSON.parse(JSON.stringify(value));
@@ -90,6 +90,7 @@ window.Efficiency = (() => {
     }
     async function control(action, seconds) {
         audioNotice = "";
+        if (["start", "resume"].includes(action) && !(full && !full.hidden)) floatingWindow?.onStart();
         claimAudio();
         audio?.unlock();
         try {
@@ -193,13 +194,16 @@ window.Efficiency = (() => {
         if (full && !full.hidden) { updateClock(full, snapshot); setBackground(full, snapshot); }
         for (const mini of minis) {
             const showPomo = active() || snapshot.finished;
+            const hasTracker = Boolean(window.TimeTracker.getState()?.activeSession);
             mini.pomo.hidden = !showPomo;
-            mini.time.textContent = fmt(snapshot.phaseRemaining);
+            mini.empty.hidden = showPomo || hasTracker;
+            mini.time.textContent = snapshot.finished ? "00:00" : fmt(snapshot.phaseRemaining);
+            mini.node.dataset.phase = snapshot.phase;
+            mini.ring.style.strokeDashoffset = String(131.947 * Math.min(1, Math.max(0, snapshot.progress)));
             mini.phase.textContent = snapshot.finished ? "Помодоро завершён" : `${snapshot.phase === "work" ? "Фокус" : "Отдых"}${state.pomodoro.status === "paused" ? " · пауза" : ""}`;
             mini.toggle.textContent = state.pomodoro.status === "running" ? "Ⅱ" : "▶";
             mini.toggle.setAttribute("aria-label", state.pomodoro.status === "running" ? "Приостановить помодоро" : "Продолжить помодоро");
-            mini.node.hidden = !(showPomo || window.TimeTracker.getState()?.activeSession);
-            if (mini.dock) mini.node.hidden ||= Boolean(view?.isConnected) || Boolean(full && !full.hidden) || location.pathname === "/efficiency/mini";
+            mini.node.hidden = mini.dock && (!(showPomo || hasTracker) || Boolean(view?.isConnected) || Boolean(full && !full.hidden) || location.pathname === "/efficiency/mini");
         }
         if (snapshot.finished && state.pomodoro.status === "running" && ownsAudio && !settingsDirty && !completing) {
             completing = true;
@@ -213,9 +217,9 @@ window.Efficiency = (() => {
         const doc = container.ownerDocument;
         const node = doc.createElement("aside");
         node.className = dock ? "ef-dock" : "ef-mini-panel";
-        node.innerHTML = `<div class="ef-mini-pomo"><a href="/efficiency/pomodoro" data-return class="ef-mini-open"><span class="ef-mini-icon">◷</span><span><small data-mini-phase>Фокус</small><strong data-mini-time>25:00</strong></span></a><button type="button" class="ef-mini-pause" aria-label="Приостановить помодоро">Ⅱ</button></div><div class="ef-mini-tracker"></div><div class="ef-mini-footer"><a href="/efficiency/pomodoro" data-return>Открыть страницу ↗</a>${dock ? '<button type="button" data-popout aria-label="Открыть отдельное мини-окно">▣</button>' : ""}</div>`;
+        node.innerHTML = `<header class="ef-mini-heading"><span class="ef-live-dot"></span> ФОКУС И ВРЕМЯ</header><div class="ef-mini-empty" hidden><strong>В своём ритме</strong><span>Здесь появятся таймер и текущий режим дня.</span></div><div class="ef-mini-pomo"><a href="/efficiency/pomodoro" data-return class="ef-mini-open"><span class="ef-mini-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="ef-mini-ring-track" cx="24" cy="24" r="21"/><circle data-mini-ring cx="24" cy="24" r="21"/></svg><span>◷</span></span><span><small data-mini-phase>Фокус</small><strong data-mini-time>25:00</strong></span></a><button type="button" class="ef-mini-pause" aria-label="Приостановить помодоро">Ⅱ</button></div><div class="ef-mini-tracker"></div><div class="ef-mini-footer"><a href="/efficiency/pomodoro" data-return>Вернуться к таймеру ↗</a>${dock ? '<button type="button" data-popout aria-label="Открыть мини-окно поверх приложений">▣</button>' : ""}</div>`;
         container.append(node);
-        const record = { node, dock, pomo: node.querySelector(".ef-mini-pomo"), phase: node.querySelector("[data-mini-phase]"), time: node.querySelector("[data-mini-time]"), toggle: node.querySelector(".ef-mini-pause") };
+        const record = { node, dock, pomo: node.querySelector(".ef-mini-pomo"), empty: node.querySelector(".ef-mini-empty"), ring: node.querySelector("[data-mini-ring]"), phase: node.querySelector("[data-mini-phase]"), time: node.querySelector("[data-mini-time]"), toggle: node.querySelector(".ef-mini-pause") };
         minis.add(record);
         record.toggle.addEventListener("click", () => control(state.pomodoro.status === "running" ? "pause" : state.pomodoro.status === "paused" ? "resume" : "start"));
         node.querySelectorAll("[data-return]").forEach(link => link.addEventListener("click", event => {
@@ -232,23 +236,24 @@ window.Efficiency = (() => {
         });
         return () => { minis.delete(record); trackerCleanup?.(); node.remove(); };
     }
-    async function openMiniWindow() {
-        try {
-            if (window.documentPictureInPicture?.requestWindow) {
-                if (pipWindow && !pipWindow.closed) { pipWindow.focus(); return; }
-                pipWindow = await window.documentPictureInPicture.requestWindow({ width: 380, height: 320 });
-                const doc = pipWindow.document;
-                doc.title = "Фокус и время";
-                document.querySelectorAll('link[rel="stylesheet"]').forEach(link => { const style = doc.createElement("link"); style.rel = "stylesheet"; style.href = link.href; doc.head.append(style); });
-                doc.body.className = "ef-pip-body";
-                const remove = createMini(doc.body);
-                pipWindow.addEventListener("pagehide", remove, { once: true });
-                tick();
-            } else {
-                const popup = window.open("/efficiency/mini", "workspace-efficiency-mini", "popup,width=390,height=380,resizable=yes");
-                if (!popup) throw new Error("Браузер заблокировал мини-окно. Разрешите всплывающие окна для этого сайта.");
-            }
-        } catch (error) { notify(error.message); }
+    function openMiniWindow() { return floatingWindow?.open(); }
+    function updateWindowSettings() {
+        if (!view || !floatingWindow) return;
+        const info = floatingWindow.getState();
+        const mode = view.querySelector("#ef-window-mode");
+        mode.value = info.mode;
+        const hint = view.querySelector("#ef-window-hint");
+        view.querySelector("#ef-window-local").hidden = info.secure;
+        if (!info.supported) hint.textContent = !info.secure
+            ? "Для окна поверх приложений открой сервис по HTTPS или через localhost в Chrome / Edge. По текущему HTTP-адресу доступно только обычное отдельное окно."
+            : "Этот браузер не поддерживает меню поверх приложений. Открой сервис в Chrome / Edge или используй обычное отдельное окно.";
+        else if (info.mode === "auto") hint.textContent = info.autoSupported
+            ? "Браузер может показывать окно при уходе с вкладки, когда играет музыка. Разреши автоматический режим «Картинка в картинке» для сайта. Без музыки выбери открытие при запуске."
+            : "Браузер пока не поддерживает автоматическое появление. Выбери открытие при запуске или открой окно кнопкой.";
+        else if (info.mode === "pinned") hint.textContent = "Откроется вместе с запуском таймера или дня и останется поверх вкладок и других приложений. Окно можно перемещать и менять его размер. Полноэкранный запуск не открывает мини-окно.";
+        else hint.textContent = "Открой мини-окно кнопкой перед переходом к другим вкладкам или приложениям. Оно останется поверх них.";
+        view.querySelector("#ef-window-status").textContent = info.open ? info.kind === "pip" ? "Окно поверх приложений открыто" : "Отдельное окно открыто" : "";
+        view.querySelector("#ef-popout").textContent = info.supported ? "Открыть поверх окон ↗" : "Открыть отдельное окно ↗";
     }
     function ensureFull() {
         if (full) return;
@@ -284,8 +289,9 @@ window.Efficiency = (() => {
           <p class="ef-hint" id="ef-save-status" role="status">Настройки сохраняются автоматически</p>
         </section><section class="tool-card ef-preview"><div class="ef-preview-eyebrow"><span class="ef-live-dot"></span> ОДНА ЗАДАЧА ЗА РАЗ</div>${ringMarkup()}${controlsMarkup()}
           <label class="ef-seek-label">Перемотка от начала<input id="ef-seek" type="range" min="0" max="7200" step="1" value="0"></label><div class="ef-seek-exact"><label>Перейти к минуте<input id="ef-seek-minutes" type="number" min="0" step="any" value="0"></label><button id="ef-seek-go" type="button" class="button button--secondary">Перейти</button></div>
-          <div class="ef-launch"><button id="ef-start-background" class="button" type="button">Запустить в фоне</button><button id="ef-start-full" class="button button--secondary" type="button">Старт в полный экран</button></div><div class="ef-view-actions"><button id="ef-full" type="button" class="button button--ghost">Полный экран ↗</button><button id="ef-popout" type="button" class="button button--ghost">Мини-окно ▣</button><button id="ef-sound" type="button" class="button button--ghost">Включить звук здесь ♪</button></div><p id="ef-audio-notice" class="ef-warning" hidden></p>
-          <p class="ef-hint">Таймер продолжает идти на других страницах. Мини-окно поверх приложений доступно в браузерах с Picture-in-Picture; иначе откроется отдельное окно. Сон компьютера или ограничения браузера могут приостановить звук, но время не потеряется.</p>
+          <div class="ef-launch"><button id="ef-start-background" class="button" type="button">Запустить в фоне</button><button id="ef-start-full" class="button button--secondary" type="button">Старт в полный экран</button></div><div class="ef-view-actions"><button id="ef-full" type="button" class="button button--ghost">Полный экран ↗</button><button id="ef-sound" type="button" class="button button--ghost">Включить звук здесь ♪</button></div><p id="ef-audio-notice" class="ef-warning" hidden></p>
+          <div class="ef-window-settings"><label for="ef-window-mode">Мини-окно поверх приложений</label><select id="ef-window-mode"><option value="pinned">Открывать при запуске</option><option value="auto">При уходе с вкладки (с музыкой)</option><option value="manual">Только по кнопке</option></select><p id="ef-window-hint" class="ef-hint"></p><p id="ef-window-local" class="ef-hint" hidden>Для текущего сервера: запусти <code>./run-browser.sh</code> на компьютере и открой <a href="http://localhost:1781/efficiency/pomodoro" target="_blank" rel="noopener">локальный вход ↗</a>. Данные останутся на сервере.</p><button id="ef-popout" type="button" class="button button--secondary">Открыть поверх окон ↗</button><p id="ef-window-status" class="ef-window-status" role="status"></p></div>
+          <p class="ef-hint">Таймер и трекер продолжают работать на других страницах. Сон компьютера или ограничения браузера могут приостановить звук, но время не потеряется.</p>
         </section></div><section id="efficiency-tracker"></section>`;
     }
     function mediaOptions() {
@@ -328,6 +334,11 @@ window.Efficiency = (() => {
         current.querySelector("#ef-start-full").addEventListener("click", () => { openFull(); control("start"); });
         current.querySelector("#ef-full").addEventListener("click", openFull);
         current.querySelector("#ef-popout").addEventListener("click", openMiniWindow);
+        current.querySelector("#ef-window-mode").addEventListener("change", event => {
+            floatingWindow.setMode(event.target.value);
+            if (event.target.value === "pinned" && (active() || window.TimeTracker.getState()?.activeSession)) floatingWindow.onStart();
+        });
+        updateWindowSettings();
         current.querySelector("#ef-sound").addEventListener("click", () => { audioNotice = ""; claimAudio(); audio.unlock(); tick(); });
         current.querySelector("#ef-seek").addEventListener("change", event => control("seek", Number(event.target.value)));
         current.querySelector("#ef-seek-go").addEventListener("click", () => {
@@ -371,7 +382,14 @@ window.Efficiency = (() => {
         initialized = true; services = svc;
         state = { revision: 0, settings: Engine.defaults(), pomodoro: { status: "idle", elapsed: 0, anchor: null, config: Engine.defaults() } };
         audio = new Engine.AudioController({ audioFactory: () => { const element = document.createElement("audio"); element.id = "efficiency-audio"; element.hidden = true; document.body.append(element); return element; }, onError: message => { audioNotice = String(message || "Нажмите «Включить звук здесь», чтобы разрешить воспроизведение."); } });
-        const trackerReady = window.TimeTracker.init(services);
+        floatingWindow = new window.EfficiencyWindow({
+            render: doc => { const remove = createMini(doc.body); tick(); return remove; },
+            hasActivity: () => Boolean(active() || window.TimeTracker.getState()?.activeSession),
+            canAutoOpen: () => ownsAudio,
+            onChange: updateWindowSettings,
+            onError: message => notify(message),
+        });
+        const trackerReady = window.TimeTracker.init({ ...services, onTrackerStart: () => { if (!(full && !full.hidden)) floatingWindow.onStart(); } });
         ready = Promise.all([refresh(), refreshMedia(), trackerReady]).then(() => { fillSettings(); return state; });
         ready.catch(error => notify(`Эффективность: ${error.message}`));
         createMini(document.body, true);

@@ -141,6 +141,8 @@ window.TimeTracker = (() => {
 
     async function action(name, modeId) {
         if (mutation) return tracker;
+        // Keep the browser's click activation for a native floating window.
+        if (!tracker.activeSession && ["start", "switch"].includes(name)) services.onTrackerStart?.();
         mutation = true;
         emit();
         try {
