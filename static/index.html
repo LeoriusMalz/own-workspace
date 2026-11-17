@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="/yt-manager.css">
     <link rel="stylesheet" href="/yt-mutator.css">
     <link rel="stylesheet" href="/jira-creator.css">
+    <link rel="stylesheet" href="/pomodoro.css">
+    <link rel="stylesheet" href="/time-tracker.css">
 </head>
 <body>
     <header class="app-header">
@@ -72,6 +74,18 @@
                 </div>
             </div>
 
+            <div class="nav-dropdown" data-dropdown="efficiency">
+                <button class="nav-button" type="button" data-dropdown-trigger="efficiency" aria-expanded="false">
+                    Эффективность <span class="chevron" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="m2.5 4.25 3.5 3.5 3.5-3.5"/></svg></span>
+                </button>
+                <div class="dropdown-menu" data-dropdown-menu="efficiency" hidden>
+                    <div class="dropdown-label">Эффективность</div>
+                    <a class="dropdown-item" href="/efficiency/pomodoro" data-link>
+                        <span class="dropdown-icon dropdown-icon--green">◷</span>
+                        <span><strong>Помодоро</strong><small>Фокус и трекер времени</small></span>
+                    </a>
+                </div>
+            </div>
             <button class="nav-button" id="settings-button" type="button">Настройки</button>
         </nav>
 
@@ -200,6 +214,9 @@
     <script src="/jira-creator.js" defer></script>
     <script src="/yt-manager.js" defer></script>
     <script src="/yt-mutator.js" defer></script>
+    <script src="/pomodoro-engine.js" defer></script>
+    <script src="/time-tracker.js" defer></script>
+    <script src="/pomodoro.js" defer></script>
     <script src="/app.js" defer></script>
 </body>
 </html>

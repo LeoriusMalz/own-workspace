@@ -28,7 +28,7 @@ window.JiraCreator = (() => {
     }
 
     function emptyDraft() {
-        return { project: "UCP", issueType: "", subproject: "", kind: "", title: "", description: "", plannedStart: today(), plannedEnd: "", epic: "", epicLabel: "", extraFields: {}, experiment: { enabled: false, audience: "20", count: 4, layer: "", groups: ["контроль", "", "", ""] } };
+        return { project: "UCP", issueType: "3", subproject: "", kind: "", title: "", description: "", plannedStart: today(), plannedEnd: "", epic: "", epicLabel: "", extraFields: {}, experiment: { enabled: false, audience: "20", count: 4, layer: "", groups: ["контроль", "", "", ""] } };
     }
 
     function loadDraft() {

@@ -89,10 +89,22 @@ def jira_creator_styles():
     return send_from_directory(STATIC_DIR, "jira-creator.css")
 
 
+@bp.get("/pomodoro.js")
+@bp.get("/pomodoro-engine.js")
+@bp.get("/pomodoro.css")
+@bp.get("/time-tracker.js")
+@bp.get("/time-tracker.css")
+def efficiency_assets():
+    from flask import request
+    return send_from_directory(STATIC_DIR, request.path.lstrip("/"))
+
+
 @bp.get("/")
 @bp.get("/tools")
 @bp.get("/notes")
 @bp.get("/tools/<path:_>")
 @bp.get("/notes/<path:_>")
+@bp.get("/efficiency")
+@bp.get("/efficiency/<path:_>")
 def spa(_: str | None = None):
     return send_from_directory(STATIC_DIR, "index.html")

@@ -1000,6 +1000,7 @@ function confirmDeleteNote(kind, slug, title) {
 }
 
 async function renderRoute() {
+    window.Efficiency?.leavePage?.();
     window.JiraCreator?.destroy?.();
     window.YtManager?.destroy?.();
     window.YtMutator?.destroy?.();
@@ -1041,6 +1042,10 @@ async function renderRoute() {
         });
     } else if (path === "/tools/jira-creator") {
         window.JiraCreator.render(app, { apiFetch, escapeHtml, showToast, showTokenModal, tokenKey: TOKEN_KEYS.jira });
+    } else if (path === "/efficiency" || path === "/efficiency/pomodoro") {
+        window.Efficiency.render(app);
+    } else if (path === "/efficiency/mini") {
+        window.Efficiency.renderCompact(app);
     } else if (path === "/notes" || path === "/notes/") {
         app.innerHTML = notesHomeTemplate();
         document.getElementById("empty-create-note").addEventListener("click", createDraft);
@@ -1112,6 +1117,7 @@ ensureInitialState();
 async function ensureInitialState() {
     updateTokenStatus();
     updateAvatar();
+    window.Efficiency?.init({ apiFetch, escapeHtml, showToast, navigate });
     await loadNotesIndex();
     renderRoute();
 }

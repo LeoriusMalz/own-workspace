@@ -1,0 +1,95 @@
+.ef-page { --focus: #83d6b4; --rest: #9cb8ff; }
+.ef-page .button--ghost, .ef-full .button--ghost { background: transparent; border-color: transparent; color: var(--text-soft); }
+.ef-page .button--ghost:hover, .ef-full .button--ghost:hover { background: var(--surface-2); border-color: var(--border); color: var(--text); }
+.ef-independent { color: var(--text-faint); font-size: 11px; border: 1px solid var(--border); padding: 8px 12px; border-radius: 20px; white-space: nowrap; }
+.ef-pomo-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, 1fr); align-items: start; gap: 22px; margin-bottom: 32px; }
+.ef-settings, .ef-preview { padding: 25px; min-width: 0; }
+.ef-preview { position: sticky; top: 90px; text-align: center; background: radial-gradient(ellipse at 50% 20%, rgba(77, 159, 119, .08), transparent 65%), var(--surface); }
+.ef-section-heading { display: flex; gap: 12px; align-items: center; margin-bottom: 23px; }
+.ef-section-heading h2 { margin: 0; font-size: 18px; font-weight: 650; }
+.ef-section-num { font: 11px var(--mono); color: var(--green); border: 1px solid var(--border-strong); padding: 7px; border-radius: 8px; }
+.ef-tag { margin-left: auto; font-size: 10px; color: var(--green); background: var(--green-soft); padding: 5px 9px; border-radius: 20px; }
+.ef-grid-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-bottom: 16px; }
+.ef-settings label, .ef-seek-exact label { display: flex; flex-direction: column; gap: 8px; color: var(--text-soft); font-size: 11px; }
+.ef-settings input:not([type="checkbox"]):not([type="range"]), .ef-settings select, .ef-seek-exact input { width: 100%; min-width: 0; height: 39px; padding: 0 11px; background: #0d1219; color: var(--text); border: 1px solid var(--border-strong); border-radius: 8px; outline: none; font-size: 12px; }
+.ef-settings input:focus-visible, .ef-settings select:focus-visible, .ef-seek-exact input:focus-visible { border-color: var(--green); outline: 2px solid rgba(84, 212, 155, .16); }
+.ef-settings label.ef-check { flex-direction: row; align-items: center; gap: 9px; line-height: 1.5; }
+.ef-settings input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--green); flex-shrink: 0; }
+.ef-settings input[type="range"], .ef-seek-label input { width: 100%; accent-color: var(--green); cursor: pointer; }
+.ef-settings :disabled { opacity: .4; }
+.ef-hint { color: var(--text-faint); font-size: 10px; line-height: 1.75; }
+.ef-divider { height: 1px; background: var(--border); margin: 22px 0; }
+.ef-details { padding: 16px 0; border-top: 1px solid var(--border); }
+.ef-details summary { cursor: pointer; color: var(--text); font-size: 12px; font-weight: 600; }
+.ef-details[open] summary { margin-bottom: 19px; }
+.ef-volume { margin-bottom: 20px; position: relative; }
+.ef-volume output { position: absolute; right: 0; top: 0; color: var(--green); }
+.ef-upload-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.ef-settings label.ef-upload { display: inline-flex; flex-direction: row; cursor: pointer; align-items: center; color: var(--text); }
+.ef-library { display: grid; gap: 4px; max-height: 180px; overflow: auto; margin-top: 10px; }
+.ef-library > div { display: flex; gap: 8px; align-items: center; padding: 6px 0; color: var(--text-soft); font-size: 11px; }
+.ef-library span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.ef-library small { color: var(--text-faint); font-size: 9px; white-space: nowrap; }
+.ef-library button { border: 0; background: none; color: var(--text-faint); cursor: pointer; font-size: 18px; }
+.ef-preview-eyebrow { color: var(--text-faint); font-size: 8px; letter-spacing: .18em; display: flex; justify-content: center; align-items: center; gap: 8px; }
+.ef-live-dot { width: 5px; height: 5px; border-radius: 100%; background: #83d6b4; box-shadow: 0 0 13px rgba(84, 212, 155, .5); }
+.ef-clock { position: relative; max-width: 280px; margin: 28px auto 8px; aspect-ratio: 1; color: #83d6b4; }
+[data-phase="rest"] .ef-clock, [data-phase="rest"].ef-clock { color: #9cb8ff; }
+.ef-clock svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.ef-clock circle { fill: none; stroke-width: 3; }
+.ef-ring-track { stroke: rgba(166, 184, 207, .10); }
+.ef-ring-fill { stroke: currentColor; stroke-dasharray: 678.584; stroke-linecap: round; filter: drop-shadow(0 0 5px rgba(84, 212, 155, .2)); }
+.ef-clock-copy { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
+.ef-phase { color: currentColor; font-size: 12px; letter-spacing: .03em; }
+.ef-clock strong { color: var(--text); font-size: clamp(42px, 4vw, 60px); font-weight: 450; letter-spacing: -.045em; font-variant-numeric: tabular-nums; line-height: 1; }
+.ef-cycle { color: var(--text-faint); font-size: 10px; }
+.ef-clock--line { aspect-ratio: auto; height: 180px; }
+.ef-clock--line svg { display: none; }
+.ef-bar { height: 6px; background: rgba(166, 184, 207, .12); border-radius: 9px; margin: 0 auto 25px; max-width: 320px; overflow: hidden; }
+.ef-bar span { display: block; height: 100%; width: 100%; background: #83d6b4; border-radius: inherit; }
+[data-phase="rest"] .ef-bar span { background: #9cb8ff; }
+.ef-total { color: var(--text-faint); font-size: 11px; margin: 18px 0; font-variant-numeric: tabular-nums; }
+.ef-controls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.ef-controls .button { font-size: 11px; min-height: 35px; padding: 0 12px; }
+.ef-controls .button[data-control="toggle"] { background: #83d6b4; border-color: #83d6b4; color: #0d211c; min-width: 100px; }
+.ef-seek-label { display: flex; gap: 10px; flex-direction: column; text-align: left; color: var(--text-faint); font-size: 10px; margin: 25px 0 14px; }
+.ef-seek-exact { display: flex; align-items: flex-end; gap: 9px; }
+.ef-seek-exact label { flex: 1; text-align: left; }
+.ef-seek-exact .button { min-height: 39px; }
+.ef-launch { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 24px 0 10px; }
+.ef-launch .button { font-size: 11px; padding: 10px; min-height: 42px; }
+.ef-view-actions { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
+.ef-view-actions .button { font-size: 10px; padding: 0 8px; }
+.ef-warning { color: var(--amber); font-size: 11px; line-height: 1.6; padding: 10px; background: rgba(242, 186, 98, .06); border-radius: 8px; }
+.ef-dock { position: fixed; right: 22px; bottom: 22px; z-index: 55; width: min(345px, calc(100vw - 30px)); padding: 14px; background: rgba(17, 22, 31, .97); border: 1px solid var(--border-strong); border-radius: 16px; box-shadow: 0 12px 45px rgba(0,0,0,.45); backdrop-filter: blur(20px); }
+.ef-mini-panel { padding: 18px; width: 100%; }
+.ef-mini-pomo { display: flex; align-items: center; gap: 14px; }
+.ef-mini-open { display: flex; gap: 13px; align-items: center; flex: 1; }
+.ef-mini-icon { color: #83d6b4; font-size: 30px; }
+.ef-mini-open small { color: var(--text-soft); font-size: 10px; display: block; margin-bottom: 4px; }
+.ef-mini-open strong { font-size: 27px; font-weight: 550; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+.ef-mini-pause { display: grid; place-items: center; width: 37px; height: 37px; background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: 50%; color: var(--text); font-size: 14px; cursor: pointer; }
+.ef-mini-tracker:not(:empty) { margin-top: 12px; }
+.ef-mini-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; margin-top: 10px; border-top: 1px solid var(--border); }
+.ef-mini-footer a { font-size: 10px; color: var(--text-faint); }
+.ef-mini-footer button { background: none; color: var(--text-soft); border: 0; cursor: pointer; }
+.ef-full { position: fixed; z-index: 1000; inset: 0; width: 100vw; height: 100dvh; background: #090e12; overflow: auto; color: var(--text); }
+.ef-background, .ef-full-shade { position: absolute; inset: 0; }
+.ef-background img, .ef-background video { width: 100%; height: 100%; object-fit: cover; }
+.ef-full-shade { background: linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.52)); }
+.ef-full-top { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 25px 32px; }
+.ef-full-top > span { font-size: 10px; letter-spacing: .18em; color: #b3bcca; }
+.ef-full-clock { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; min-height: calc(100dvh - 220px); padding: 0 20px 25px; text-align: center; }
+.ef-full .ef-clock { width: min(45vh, 390px); max-width: 390px; margin-top: 10px; }
+.ef-full .ef-clock strong { font-size: clamp(58px, 8vw, 86px); }
+.ef-full .ef-clock--line { height: 200px; }
+.ef-full .ef-cycle, .ef-full .ef-total { color: #b0bbc9; }
+.ef-full .ef-bar { width: min(70vw, 600px); max-width: 600px; }
+.ef-full-tracker { position: relative; z-index: 1; max-width: 800px; padding: 0 25px 25px; margin: auto; }
+.ef-full-tracker .tt-mini { background: rgba(10,15,22,.7); backdrop-filter: blur(12px); border-radius: 12px; padding: 16px; }
+.ef-compact-body .app-header, .ef-compact-body .token-stack { display: none; }
+.ef-compact-body .app-main { width: 100%; margin: 0; padding: 0; }
+.ef-pip-body { min-width: 280px; background: #11161f; }
+@media(max-width: 1050px) { .ef-pomo-layout { grid-template-columns: 1fr 1fr; gap: 16px; } .ef-settings,.ef-preview { padding: 19px; } .ef-launch { grid-template-columns: 1fr; } .app-header { column-gap: 10px; padding-left: 16px; padding-right: 16px; } .header-nav { gap: 1px; } }
+@media(max-width: 800px) { .ef-pomo-layout { grid-template-columns: 1fr; } .ef-preview { position: static; grid-row: 1; } .ef-clock { width: 240px; } .ef-launch { grid-template-columns: 1fr 1fr; } .ef-independent { display: none; } .ef-dock { right: 12px; bottom: 12px; } .ef-full-top { padding: 15px; } }
+@media(max-width: 450px) { .ef-grid-two { gap: 10px; } .ef-settings,.ef-preview { padding: 16px; } .ef-controls { gap: 5px; } .ef-controls .button { padding: 0 9px; } .ef-launch { grid-template-columns: 1fr; } .ef-full-clock { min-height: calc(100dvh - 250px); } }
